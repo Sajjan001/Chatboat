@@ -8,23 +8,28 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# Initialize Groq API with environment variable
+# Initialize Groq API - lazy loading to support Gunicorn
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise ValueError("GROQ_API_KEY environment variable is not set. Please set it in your .env file or environment.")
-os.environ["GROQ_API_KEY"] = GROQ_API_KEY
+llm = None
 
-llm = ChatGroq(
-    model_name="llama-3.1-8b-instant",
-    temperature=0.7
-)
+def get_llm():
+    global llm
+    if llm is None:
+        if not GROQ_API_KEY:
+            raise ValueError("GROQ_API_KEY environment variable is not set. Please set it in your Render environment variables.")
+        llm = ChatGroq(
+            model_name="llama-3.1-8b-instant",
+            temperature=0.7
+        )
+    return llm
 
 # Store chat history
 chat_history = []
 
 @app.route('/')
 def home():
-    html_content = open('index.html', encoding='utf-8').read()
+    html_path = os.path.join(os.path.dirname(__file__), 'index.html')
+    html_content = open(html_path, encoding='utf-8').read()
     return html_content
 
 @app.route('/api/chat', methods=['POST'])
@@ -56,7 +61,7 @@ def chat():
         enhanced_message = f"{thinking_context}\n\nUser question: {user_message}"
         
         # Get response from LLM with enhanced context
-        response = llm.invoke(chat_history + [enhanced_message])
+        response = get_llm().invoke(chat_history + [enhanced_message])
         bot_response = response.content
         
         # Add bot response to history
@@ -85,7 +90,7 @@ Question: {question}
 Answer with ONLY "YES" or "NO". If it's about AI/ML/Deep Learning/Data Science/Neural Networks/LLMs/ChatGPT/NLP/Computer Vision or similar topics, answer YES. Otherwise answer NO."""
         
         # Call LLM to check
-        response = llm.invoke(check_prompt)
+        response = get_llm().invoke(check_prompt)
         result = response.content.strip().upper()
         
         return "YES" in result
