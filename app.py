@@ -9,7 +9,9 @@ load_dotenv()
 app = Flask(__name__)
 
 # Initialize Groq API with environment variable
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "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")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("GROQ_API_KEY environment variable is not set. Please set it in your .env file or environment.")
 os.environ["GROQ_API_KEY"] = GROQ_API_KEY
 
 llm = ChatGroq(
