@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: nirmaan-chatboat
+    runtime: python311
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: GROQ_API_KEY
+        scope: run
+        value: # Add your Groq API key here
