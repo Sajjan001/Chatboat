@@ -7,4 +7,3 @@ services:
     envVars:
       - key: GROQ_API_KEY
         scope: run
-        value: # Add your Groq API key here
